@@ -37,6 +37,10 @@ def clean_data(df):
     df = clean_nulls(df)
     df = clean_cols(df)
     df = get_dates(df)
+    if 'ParkName' in df.columns:
+        df['ParkName'] = (df['ParkName']
+                          .str.replace("Wolfe\\'s Pond Park", "Wolfe's Pond Park", regex=False)
+                          .str.replace('Randalls Island', "Randall's Island Park", regex=False))
     return df
 
 
@@ -85,11 +89,29 @@ def read_all_csvs(dir_path, verbose=True):
         dir_path = '../' + dir_path
     dfs = {}
     for file in os.listdir(dir_path):
+        if file[-4:]!='.csv':
+            # raise TypeError(f'File {file} is not a csv.')
+            continue
         if verbose:
             print(f'[*] Reading in {file}...')
-        if file[-4:]!='.csv':
-            raise TypeError(f'File {file} is not a csv.')
         dfs[f"{file.split('.')[0].lower().replace(' ','_')}"] = clean_data(pd.read_csv(dir_path+file))
     return dfs
     
 
+def get_parks_data():
+    '''Return a df with data by parks, merging several
+    csvs together.
+    '''
+    dfs = read_all_csvs('./data', verbose=False)
+    parks_data = (
+        dfs['observations']
+        .merge(dfs['parks'], on='ParkID', how='left')
+        .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], on='MushroomID', how='left')
+        .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
+        .drop(['Notes','LinkToINat','ParkID','WalkID',
+               'ObservationID','DateCreated','DateModified'], axis=1)
+    )
+    parks_data['Genus'] = parks_data['Genus'].str.strip()
+    parks_data['Species'] = parks_data['Species'].str.strip()
+    parks_data['FullName'] = parks_data.apply(lambda x: f"{x['Genus']} {x['Species']}", axis=1)
+    return parks_data
