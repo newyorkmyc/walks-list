@@ -37,10 +37,17 @@ def clean_data(df):
     df = clean_nulls(df)
     df = clean_cols(df)
     df = get_dates(df)
+    
+    # Fix a couple of misspelled park names
     if 'ParkName' in df.columns:
         df['ParkName'] = (df['ParkName']
                           .str.replace("Wolfe\\'s Pond Park", "Wolfe's Pond Park", regex=False)
                           .str.replace('Randalls Island', "Randall's Island Park", regex=False))
+
+    # Remove rows with unknown species ("sp.", "spp.", etc.)
+    if 'Species' in df.columns:
+        df = df.loc[(~df['Species'].str.contains('sp.')) & (~df['Species'].str.contains('spp.'))]
+        
     return df
 
 
