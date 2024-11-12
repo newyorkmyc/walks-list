@@ -26,6 +26,9 @@ COLORS = ['#413934', '#be9530', '#e1839a', '#cf5530', '#e8e3d6']
 nymyc_cmap = ListedColormap(COLORS, name="nymyc_cmap")
 nymyc_cmap_r = nymyc_cmap.reversed()
 
+MONTHS = {1:'Jan', 2:'Feb', 3:'March', 4:'April', 5:'May', 6:'June',
+          7:'July', 8:'Aug', 9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}
+
 
 def clean_data(df):
     '''Chain together all cleaning/standardizing functions into
@@ -119,9 +122,7 @@ def get_observations_data(compound_dates=False):
                            'WalkID','ObservationID','DateCreated','DateModified'], axis=1)
                     .dropna(subset=['Species']))
     observations['Date'] = observations['WalkDate'].dt.normalize()
-    months = {1:'Jan', 2:'Feb', 3:'March', 4:'April', 5:'May', 6:'June',
-              7:'July', 8:'Aug', 9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}
-    observations['Month'] = observations['WalkDate'].dt.month.map(months)
+    observations['Month'] = observations['WalkDate'].dt.month.map(MONTHS)
     observations['Week'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[1], axis=1)
     observations['Year'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[0], axis=1)
     if compound_dates:
