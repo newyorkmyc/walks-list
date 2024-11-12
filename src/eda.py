@@ -103,6 +103,33 @@ def read_all_csvs(dir_path, verbose=True):
             print(f'[*] Reading in {file}...')
         dfs[f"{file.split('.')[0].lower().replace(' ','_')}"] = clean_data(pd.read_csv(dir_path+file))
     return dfs
+
+
+def get_observations_data(compound_dates=False):
+    '''Return a df with data by individual observations,
+    merging several csvs together.
+    '''
+    dfs = read_all_csvs('./data', verbose=False)
+    observations = (dfs['observations']
+                    .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], 
+                           on='MushroomID', how='left')
+                    .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
+                    .merge(dfs['walks'][['WalkID','ParkID','WalkDate']])
+                    .drop(['Notes','LinkToINat','NewToPark','NewToCity','ParkID',
+                           'WalkID','ObservationID','DateCreated','DateModified'], axis=1)
+                    .dropna(subset=['Species']))
+    observations['Date'] = observations['WalkDate'].dt.normalize()
+    months = {1:'Jan', 2:'Feb', 3:'March', 4:'April', 5:'May', 6:'June',
+              7:'July', 8:'Aug', 9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}
+    observations['Month'] = observations['WalkDate'].dt.month.map(months)
+    observations['Week'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[1], axis=1)
+    observations['Year'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[0], axis=1)
+    if compound_dates:
+        observations['Month_Year'] = observations.apply(lambda x: f"{x['Month']}, {x['Year']}", axis=1)
+        observations['Week_Year'] = observations.apply(lambda x: f"Week {x['Week']}, {x['Year']}", axis=1)
+        observations['Quarter'] = observations['WalkDate'].dt.quarter
+        observations['Quarter_Year'] = observations.apply(lambda x: f"Q{x['Quarter']}, {x['Year']}", axis=1)
+    return observations
     
 
 def get_parks_data():
