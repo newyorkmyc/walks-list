@@ -55,7 +55,7 @@ def clean_data(df):
 
     # Remove rows with unknown species ("sp.", "spp.", etc.)
     if 'Species' in df.columns:
-        df = df.loc[(~df['Species'].str.contains('sp.')) & (~df['Species'].str.contains('spp.'))]
+        df = df.loc[(~df['Species'].str.contains('sp.', na=False)) & (~df['Species'].str.contains('spp.', na=False))]
         
     return df
 
