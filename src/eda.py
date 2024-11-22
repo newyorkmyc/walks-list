@@ -53,8 +53,9 @@ def clean_data(df):
                           .str.replace("Wolfe\\'s Pond Park", "Wolfe's Pond Park", regex=False)
                           .str.replace('Randalls Island', "Randall's Island Park", regex=False))
 
-    # Remove rows with unknown species ("sp.", "spp.", etc.)
+    # Remove rows with unknown species ("sp.", "spp.", NaN, etc.)
     if 'Species' in df.columns:
+        df = df.dropna(subset=['Species'])
         df = df.loc[(~df['Species'].str.contains('sp.', na=False)) & (~df['Species'].str.contains('spp.', na=False))]
         
     return df
