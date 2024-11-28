@@ -6,6 +6,7 @@ Main functions:
 read_all_csvs: create Pandas DataFrames for all files in a directory
 '''
 
+import geopandas as gpd
 import matplotlib as mpl
 import numpy as np
 import os
@@ -82,6 +83,28 @@ def get_dates(df):
         if 'date' in col.lower().strip():
             df[col] = pd.to_datetime(df[col])
     return df
+
+
+def groupby_multipoly(df, by, aggfunc="first"):
+    '''Take directly from
+    https://stackoverflow.com/questions/64811011/geopandas-converting-single-polygons-to-multipolygon-keeping-individual-polygo
+    '''
+    data = df.drop(labels=df.geometry.name, axis=1)
+    aggregated_data = data.groupby(by=by).agg(aggfunc)
+
+    # Process spatial component
+    def merge_geometries(block):
+        return MultiPolygon(block.values)
+
+    g = df.groupby(by=by, group_keys=False)[df.geometry.name].agg(
+        merge_geometries
+    )
+
+    # Aggregate
+    aggregated_geometry = gpd.GeoDataFrame(g, geometry=df.geometry.name, crs=df.crs)
+    # Recombine
+    aggregated = aggregated_geometry.join(aggregated_data)
+    return aggregated
     
 
 def read_all_csvs(dir_path, verbose=True):
