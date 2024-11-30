@@ -168,7 +168,7 @@ def get_observations_data(compound_dates=False):
         observations['Week_Year'] = observations.apply(lambda x: f"Week {x['Week']}, {x['Year']}", axis=1)
         observations['Quarter'] = observations['WalkDate'].dt.quarter
         observations['Quarter_Year'] = observations.apply(lambda x: f"Q{x['Quarter']}, {x['Year']}", axis=1)
-    return observations
+    return remove_unknown_sp(observations)
     
 
 def get_parks_data():
@@ -187,4 +187,4 @@ def get_parks_data():
     parks_data['Genus'] = parks_data['Genus'].str.strip()
     parks_data['Species'] = parks_data['Species'].str.strip()
     parks_data['FullName'] = parks_data.apply(lambda x: f"{x['Genus']} {x['Species']}", axis=1)
-    return parks_data
+    return remove_unknown_sp(parks_data)
