@@ -56,8 +56,7 @@ def clean_data(df):
 
     # Remove rows with unknown species ("sp.", "spp.", NaN, etc.)
     if 'Species' in df.columns:
-        df = df.dropna(subset=['Species'])
-        df = df.loc[(~df['Species'].str.contains('sp.', na=False)) & (~df['Species'].str.contains('spp.', na=False))]
+        df = remove_unknown_sp(df)
         
     return df
 
@@ -136,6 +135,15 @@ def read_all_csvs(dir_path, verbose=True):
             print(f'[*] Reading in {file}...')
         dfs[f"{file.split('.')[0].lower().replace(' ','_')}"] = clean_data(pd.read_csv(dir_path+file))
     return dfs
+
+
+def remove_unknown_sp(df):
+    '''Remove all rows with unknown species, identified in
+    the data as 'sp.' or 'spp.'
+    '''
+    df = df.dropna(subset=['Species'])
+    df = df.loc[(~df['Species'].str.contains('sp.', na=False)) & (~df['Species'].str.contains('spp.', na=False))]
+    return df
 
 
 def get_observations_data(compound_dates=False):
