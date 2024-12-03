@@ -137,12 +137,54 @@ def read_all_csvs(dir_path, verbose=True):
     return dfs
 
 
+def remove_duplicate_obs(df, keep_var=True):
+    '''Many walks list the same mushroom species multiple times. 
+    Often this is related to species being unknown, but this may 
+    also be due to errors in data entry. 
+    
+    Additional context from an email from Ethan Crenson on 11/29/24:
+        "We usually list species once even if found multiple times 
+        over the course of a walk. The exceptions might be:
+        
+        1- varieties. The lists are structured to deal with genus 
+        and species. When we find Amanita brunnescens and 
+        Amanita brunnescens var. pallida they both go on the list. 
+        But the var. pallida part goes in the notes. 
+        
+        2- undetermined species left at genus can appear twice. 
+        Usually there are also differences noted in the notes field. 
+        I.e. Gymnopus sp. (hairy stem) Gymnopus sp. (smooth stem).
+        
+        3-the occasional mistake. This should not be extensive in 
+        the lists."
+
+    As such, we will remove duplicate species listings from the 
+    data for this analysis except where indicated in the
+    observation notes.
+    '''
+    if keep_var:
+        # Split df by repeated rows
+        dupe_rows = df.duplicated(subset=['WalkID', 'MushroomID'], keep=False)
+        cols = ['MushroomID','WalkID','Notes']
+        single_obs_rows = df.loc[~dupe_rows][cols]
+        repeated_obs_rows = df.loc[dupe_rows][cols]
+        
+        # From https://stackoverflow.com/questions/60928060/pandas-drop-duplicates-where-condition
+        repeated_obs_rows = repeated_obs_rows[~(repeated_obs_rows[['WalkID', 'MushroomID']].duplicated()) | temp['Notes'].str.contains('var.')]
+
+        # Join all rows back together
+        return pd.concat([single_obs_rows,repeated_obs_rows]).sort_index()
+    else:
+        return df.drop_duplicates(subset=['WalkID','MushroomID'], keep='first')
+
+
 def remove_unknown_sp(df):
     '''Remove all rows with unknown species, identified in
     the data as 'sp.' or 'spp.'
     '''
     df = df.dropna(subset=['Species'])
     df = df.loc[(~df['Species'].str.contains('sp.', na=False)) & (~df['Species'].str.contains('spp.', na=False))]
+    df = df.loc[df['Species']!='sp']
     return df
 
 
@@ -168,7 +210,7 @@ def get_observations_data(compound_dates=False):
         observations['Week_Year'] = observations.apply(lambda x: f"Week {x['Week']}, {x['Year']}", axis=1)
         observations['Quarter'] = observations['WalkDate'].dt.quarter
         observations['Quarter_Year'] = observations.apply(lambda x: f"Q{x['Quarter']}, {x['Year']}", axis=1)
-    return remove_unknown_sp(observations)
+    return remove_duplicate_obs(remove_unknown_sp(observations))
     
 
 def get_parks_data():
@@ -181,10 +223,10 @@ def get_parks_data():
         .merge(dfs['parks'], on='ParkID', how='left')
         .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], on='MushroomID', how='left')
         .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
-        .drop(['Notes','LinkToINat','ParkID','WalkID',
+        .drop(['LinkToINat','ParkID','WalkID',
                'ObservationID','DateCreated','DateModified'], axis=1)
     )
     parks_data['Genus'] = parks_data['Genus'].str.strip()
     parks_data['Species'] = parks_data['Species'].str.strip()
     parks_data['FullName'] = parks_data.apply(lambda x: f"{x['Genus']} {x['Species']}", axis=1)
-    return remove_unknown_sp(parks_data)
+    return remove_duplicate_obs(remove_unknown_sp(parks_data))
