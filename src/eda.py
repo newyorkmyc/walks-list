@@ -119,8 +119,7 @@ def get_parks_data():
         .merge(dfs['parks'], on='ParkID', how='left')
         .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], on='MushroomID', how='left')
         .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
-        .drop(['LinkToINat','ParkID','WalkID',
-               'ObservationID','DateCreated','DateModified'], axis=1)
+        .drop(['LinkToINat','ParkID','ObservationID','DateCreated','DateModified'], axis=1)
     )
     parks_data['Genus'] = parks_data['Genus'].str.strip()
     parks_data['Species'] = parks_data['Species'].str.strip()
