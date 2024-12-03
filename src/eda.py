@@ -84,6 +84,50 @@ def get_dates(df):
     return df
 
 
+def get_observations_data(compound_dates=False):
+    '''Return a df with data by individual observations,
+    merging several csvs together.
+    '''
+    dfs = read_all_csvs('./data', verbose=False)
+    observations = (dfs['observations']
+                    .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], 
+                           on='MushroomID', how='left')
+                    .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
+                    .merge(dfs['walks'][['WalkID','ParkID','WalkDate']])
+                    .drop(['Notes','LinkToINat','NewToPark','NewToCity','ParkID',
+                           'WalkID','ObservationID','DateCreated','DateModified'], axis=1)
+                    .dropna(subset=['Species']))
+    observations['Date'] = observations['WalkDate'].dt.normalize()
+    observations['Month'] = observations['WalkDate'].dt.month.map(MONTHS)
+    observations['Week'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[1], axis=1)
+    observations['Year'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[0], axis=1)
+    if compound_dates:
+        observations['Month_Year'] = observations.apply(lambda x: f"{x['Month']}, {x['Year']}", axis=1)
+        observations['Week_Year'] = observations.apply(lambda x: f"Week {x['Week']}, {x['Year']}", axis=1)
+        observations['Quarter'] = observations['WalkDate'].dt.quarter
+        observations['Quarter_Year'] = observations.apply(lambda x: f"Q{x['Quarter']}, {x['Year']}", axis=1)
+    return remove_duplicate_obs(remove_unknown_sp(observations))
+    
+
+def get_parks_data():
+    '''Return a df with data by parks, merging several
+    csvs together.
+    '''
+    dfs = read_all_csvs('./data', verbose=False)
+    parks_data = (
+        dfs['observations']
+        .merge(dfs['parks'], on='ParkID', how='left')
+        .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], on='MushroomID', how='left')
+        .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
+        .drop(['LinkToINat','ParkID','WalkID',
+               'ObservationID','DateCreated','DateModified'], axis=1)
+    )
+    parks_data['Genus'] = parks_data['Genus'].str.strip()
+    parks_data['Species'] = parks_data['Species'].str.strip()
+    parks_data['FullName'] = parks_data.apply(lambda x: f"{x['Genus']} {x['Species']}", axis=1)
+    return remove_duplicate_obs(remove_unknown_sp(parks_data))
+
+
 def groupby_multipoly(df, by, aggfunc="first"):
     '''Take directly from
     https://stackoverflow.com/questions/64811011/geopandas-converting-single-polygons-to-multipolygon-keeping-individual-polygo
@@ -165,12 +209,12 @@ def remove_duplicate_obs(df, keep_var=True):
     if keep_var:
         # Split df by repeated rows
         dupe_rows = df.duplicated(subset=['WalkID', 'MushroomID'], keep=False)
-        cols = ['MushroomID','WalkID','Notes']
-        single_obs_rows = df.loc[~dupe_rows][cols]
-        repeated_obs_rows = df.loc[dupe_rows][cols]
+        single_obs_rows = df.loc[~dupe_rows]
+        repeated_obs_rows = df.loc[dupe_rows]
         
         # From https://stackoverflow.com/questions/60928060/pandas-drop-duplicates-where-condition
-        repeated_obs_rows = repeated_obs_rows[~(repeated_obs_rows[['WalkID', 'MushroomID']].duplicated()) | temp['Notes'].str.contains('var.')]
+        repeated_obs_rows = repeated_obs_rows[(~(repeated_obs_rows[['WalkID', 'MushroomID']].duplicated()) 
+                                               | repeated_obs_rows['Notes'].str.contains('var.'))]
 
         # Join all rows back together
         return pd.concat([single_obs_rows,repeated_obs_rows]).sort_index()
@@ -186,47 +230,3 @@ def remove_unknown_sp(df):
     df = df.loc[(~df['Species'].str.contains('sp.', na=False)) & (~df['Species'].str.contains('spp.', na=False))]
     df = df.loc[df['Species']!='sp']
     return df
-
-
-def get_observations_data(compound_dates=False):
-    '''Return a df with data by individual observations,
-    merging several csvs together.
-    '''
-    dfs = read_all_csvs('./data', verbose=False)
-    observations = (dfs['observations']
-                    .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], 
-                           on='MushroomID', how='left')
-                    .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
-                    .merge(dfs['walks'][['WalkID','ParkID','WalkDate']])
-                    .drop(['Notes','LinkToINat','NewToPark','NewToCity','ParkID',
-                           'WalkID','ObservationID','DateCreated','DateModified'], axis=1)
-                    .dropna(subset=['Species']))
-    observations['Date'] = observations['WalkDate'].dt.normalize()
-    observations['Month'] = observations['WalkDate'].dt.month.map(MONTHS)
-    observations['Week'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[1], axis=1)
-    observations['Year'] = observations.apply(lambda x: x['WalkDate'].isocalendar()[0], axis=1)
-    if compound_dates:
-        observations['Month_Year'] = observations.apply(lambda x: f"{x['Month']}, {x['Year']}", axis=1)
-        observations['Week_Year'] = observations.apply(lambda x: f"Week {x['Week']}, {x['Year']}", axis=1)
-        observations['Quarter'] = observations['WalkDate'].dt.quarter
-        observations['Quarter_Year'] = observations.apply(lambda x: f"Q{x['Quarter']}, {x['Year']}", axis=1)
-    return remove_duplicate_obs(remove_unknown_sp(observations))
-    
-
-def get_parks_data():
-    '''Return a df with data by parks, merging several
-    csvs together.
-    '''
-    dfs = read_all_csvs('./data', verbose=False)
-    parks_data = (
-        dfs['observations']
-        .merge(dfs['parks'], on='ParkID', how='left')
-        .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], on='MushroomID', how='left')
-        .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
-        .drop(['LinkToINat','ParkID','WalkID',
-               'ObservationID','DateCreated','DateModified'], axis=1)
-    )
-    parks_data['Genus'] = parks_data['Genus'].str.strip()
-    parks_data['Species'] = parks_data['Species'].str.strip()
-    parks_data['FullName'] = parks_data.apply(lambda x: f"{x['Genus']} {x['Species']}", axis=1)
-    return remove_duplicate_obs(remove_unknown_sp(parks_data))
