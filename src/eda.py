@@ -92,10 +92,10 @@ def get_observations_data(compound_dates=False):
     observations = (dfs['observations']
                     .merge(dfs['mushroom'][['MushroomID','BroadGroupID','Genus','Species']], 
                            on='MushroomID', how='left')
-                    .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], on='BroadGroupID', how='left')
+                    .merge(dfs['broadgroups'][['BroadGroupID','BroadGroupName']], 
+                           on='BroadGroupID', how='left')
                     .merge(dfs['walks'][['WalkID','ParkID','WalkDate']])
-                    .drop(['Notes','LinkToINat','NewToPark','NewToCity','ParkID',
-                           'WalkID','ObservationID','DateCreated','DateModified'], axis=1)
+                    .drop(['LinkToINat','NewToPark','NewToCity','ObservationID','DateCreated','DateModified'], axis=1)
                     .dropna(subset=['Species']))
     observations['Date'] = observations['WalkDate'].dt.normalize()
     observations['Month'] = observations['WalkDate'].dt.month.map(MONTHS)
