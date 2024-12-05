@@ -180,7 +180,7 @@ def read_all_csvs(dir_path, verbose=True):
     return dfs
 
 
-def remove_duplicate_obs(df, keep_var=True):
+def remove_duplicate_obs(df, keep_var=False):
     '''Many walks list the same mushroom species multiple times. 
     Often this is related to species being unknown, but this may 
     also be due to errors in data entry. 
@@ -201,9 +201,8 @@ def remove_duplicate_obs(df, keep_var=True):
         3-the occasional mistake. This should not be extensive in 
         the lists."
 
-    As such, we will remove duplicate species listings from the 
-    data for this analysis except where indicated in the
-    observation notes.
+    Ethan recommended removing ALL duplicated rows, even for instances
+    of var., therefore the `keep_var` parameter will default to False.
     '''
     if keep_var:
         # Split df by repeated rows
