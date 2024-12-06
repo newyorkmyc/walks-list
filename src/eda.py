@@ -36,6 +36,25 @@ PARKS_MAPPING = {'B': 'Brooklyn',
                  'R': 'Staten Island',
                  'Q': 'Queens'}
 
+PARKS_OFFSETS = {
+    'Green-Wood Cemetery': (-10, -40),
+    'Prospect Park': (20, 40),
+    'Van Cortlandt Park': (-40, 20),
+    'Woodlawn Cemetery': (-10, -40),
+    'Seton Falls Park': (20, 40),
+    'Pelham Bay Park': (-50, -20),
+    'Inwood Hill Park': (-50, -20),
+    "Randall's Island Park": (0, 40),
+    'Central Park': (-50, -10),
+    'Alley Pond Park': (20, 40),
+    'Kissena Park': (-20, 40),
+    'Cunningham Park': (10, -40),
+    'Forest Park': (30, -30),
+    'Clove Lakes Park': (-30, -30),
+    "Wolfe's Pond Park": (20, 40),
+    'Long Pond Park': (-20, 40),
+    'Conference House Park': (50, -20)
+
 
 def clean_data(df):
     '''Chain together all cleaning/standardizing functions into
