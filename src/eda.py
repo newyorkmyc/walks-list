@@ -54,6 +54,7 @@ PARKS_OFFSETS = {
     "Wolfe's Pond Park": (20, 40),
     'Long Pond Park': (-20, 40),
     'Conference House Park': (50, -20)
+}
 
 
 def clean_data(df):
