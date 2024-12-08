@@ -73,6 +73,7 @@ def clean_data(df):
         df['ParkName'] = (df['ParkName']
                           .str.replace("Wolfe\\'s Pond Park", "Wolfe's Pond Park", regex=False)
                           .str.replace('Randalls Island', "Randall's Island Park", regex=False))
+        df = df[~df['ParkName'].isin(['Conference House Park','Great Kills'])]
 
     # Remove rows with unknown species ("sp.", "spp.", NaN, etc.)
     if 'Species' in df.columns:
@@ -144,6 +145,8 @@ def get_parks_data():
     parks_data['Genus'] = parks_data['Genus'].str.strip()
     parks_data['Species'] = parks_data['Species'].str.strip()
     parks_data['FullName'] = parks_data.apply(lambda x: f"{x['Genus']} {x['Species']}", axis=1)
+    parks_data = parks_data.loc[~parks_data['ParkName'].isin(['Conference Hill Park', 'Great Kills Park'])]
+    parks_data = parks_data.dropna(subset='ParkName')
     return remove_duplicate_obs(remove_unknown_sp(parks_data))
 
 
