@@ -42,7 +42,7 @@ PARKS_OFFSETS = {
     'Van Cortlandt Park': (-40, 20),
     'Woodlawn Cemetery': (-10, -40),
     'Seton Falls Park': (20, 40),
-    'Pelham Bay Park': (-50, -20),
+    'Pelham Bay Park': (-80, -5),
     'Inwood Hill Park': (-50, -20),
     "Randall's Island Park": (0, 40),
     'Central Park': (-50, -10),
