@@ -53,7 +53,8 @@ PARKS_OFFSETS = {
     'Clove Lakes Park': (-30, -40),
     "Wolfe's Pond Park": (20, 40),
     'Long Pond Park': (-20, 40),
-    'Conference House Park': (50, -20)
+    'Conference House Park': (50, -20),
+    'High Rock Park': (-40, -20)
 }
 
 
